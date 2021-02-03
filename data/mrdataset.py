@@ -13,7 +13,7 @@ torch.backends.cudnn.deterministic = True
 
 class MrData():
 
-    def __init__(self,batch_size=2):
+    def __init__(self,batch_size=64):
         self.batch_size=batch_size
 
         # load previously saved word vectors

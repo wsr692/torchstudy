@@ -64,7 +64,7 @@ if __name__=='__main__':
 	criterion = criterion.to(device)
 
 
-	N_EPOCHS = 5
+	N_EPOCHS = 20
 	best_valid_loss = float('inf')
 
 	for epoch in range(N_EPOCHS):
