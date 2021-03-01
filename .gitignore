@@ -1,5 +1,5 @@
 
-data/w2v.pkl
+01_cnn/data/w2v.pkl
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
