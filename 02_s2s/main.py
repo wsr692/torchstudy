@@ -40,9 +40,10 @@ if __name__=='__main__':
 
 	# train
 	trainer=Seq2SeqTrain(model,hparams)
-	trainer.run(train_iterator,valid_iterator)
+	# trainer.run(train_iterator,valid_iterator)
+
 	# test
-	model.load_state_dict(torch.load(os.path.join(f'{hparams.save_dir},fr2en.pt')))
-	test_loss = evaluate(model, test_iterator, criterion)
+	model.load_state_dict(torch.load(os.path.join(hparams.save_dir,'fr2en.pt')))
+	test_loss = trainer.evaluate(model, test_iterator)
 	print(f'| Test Loss: {test_loss:.3f} | Test PPL: {math.exp(test_loss):7.3f} |')
 

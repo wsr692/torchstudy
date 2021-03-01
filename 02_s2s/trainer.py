@@ -21,9 +21,9 @@ class Seq2SeqTrain():
 	def count_parameters(self):
 		return sum(p.numel() for p in self.model.parameters() if p.requires_grad)
 
-	def train(self,model, iterator, optimizer, criterion, clip):
+	def train(self,iterator):
 		
-		model.train()
+		self.model.train()
 		
 		epoch_loss = 0
 		
@@ -32,9 +32,9 @@ class Seq2SeqTrain():
 			src = batch.src
 			trg = batch.trg
 			
-			optimizer.zero_grad()
+			self.optimizer.zero_grad()
 			
-			output = model(src, trg)
+			output = self.model(src, trg)
 			
 			#trg = [trg len, batch size]
 			#output = [trg len, batch size, output dim]
@@ -47,19 +47,19 @@ class Seq2SeqTrain():
 			#trg = [(trg len - 1) * batch size]
 			#output = [(trg len - 1) * batch size, output dim]
 			
-			loss = criterion(output, trg)
+			loss = self.criterion(output, trg)
 			
 			loss.backward()
 			
-			torch.nn.utils.clip_grad_norm_(model.parameters(), clip)
+			torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.hparams.CLIP)
 			
-			optimizer.step()
+			self.optimizer.step()
 			
 			epoch_loss += loss.item()
 			
 		return epoch_loss / len(iterator)
 
-	def evaluate(self,model, iterator, criterion):
+	def evaluate(self,model,iterator):
 		
 		model.eval()
 		
@@ -85,7 +85,7 @@ class Seq2SeqTrain():
 				#trg = [(trg len - 1) * batch size]
 				#output = [(trg len - 1) * batch size, output dim]
 
-				loss = criterion(output, trg)
+				loss = self.criterion(output, trg)
 				
 				epoch_loss += loss.item()
 			
@@ -108,8 +108,8 @@ class Seq2SeqTrain():
 			
 			start_time = time.time()
 			
-			train_loss = self.train(self.model, train_iterator, self.optimizer, self.criterion, self.hparams.CLIP)
-			valid_loss = self.evaluate(self.model, valid_iterator, self.criterion)
+			train_loss = self.train(train_iterator)
+			valid_loss = self.evaluate(valid_iterator)
 			
 			end_time = time.time()
 			
