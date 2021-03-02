@@ -20,16 +20,23 @@ class Encoder(nn.Module):
         
         self.dropout = nn.Dropout(dropout)
         
-    def forward(self, src):
+    def forward(self,src,src_len):
         
         #src = [src len, batch size]
         
         embedded = self.dropout(self.embedding(src))
-        
         #embedded = [src len, batch size, emb dim]
         
-        outputs, (hidden, cell) = self.rnn(embedded)
-        
+        # from 
+        # https://github.com/bentrevett/pytorch-seq2seq/blob/master/4%20-%20Packed%20Padded%20Sequences%2C%20Masking%2C%20Inference%20and%20BLEU.ipynb
+        packed_embedded = nn.utils.rnn.pack_padded_sequence(embedded, src_len.to('cpu'))
+        packed_outputs, (hidden, cell) = self.rnn(packed_embedded)
+        # output 안쓸건데...
+        outputs, _ = nn.utils.rnn.pad_packed_sequence(packed_outputs) 
+
+        # packed_outputs, hidden = self.rnn(packed_embedded)
+        #outputs, (hidden, cell) = self.rnn(embedded)
+
         #outputs = [src len, batch size, hid dim * n directions]
         #hidden = [n layers * n directions, batch size, hid dim]
         #cell = [n layers * n directions, batch size, hid dim]
@@ -102,13 +109,12 @@ class Seq2Seq(nn.Module):
         assert encoder.n_layers == decoder.n_layers, \
             "Encoder and decoder must have equal number of layers!"
         
-    def forward(self, src, trg, teacher_forcing_ratio = 0.5):
+    def forward(self,src,src_len, trg, teacher_forcing_ratio = 0.5):
         
         #src = [src len, batch size]
         #trg = [trg len, batch size]
         #teacher_forcing_ratio is probability to use teacher forcing
         #e.g. if teacher_forcing_ratio is 0.75 we use ground-truth inputs 75% of the time
-        
         batch_size = trg.shape[1]
         trg_len = trg.shape[0]
         trg_vocab_size = self.decoder.output_dim
@@ -117,7 +123,7 @@ class Seq2Seq(nn.Module):
         outputs = torch.zeros(trg_len, batch_size, trg_vocab_size).to(self.device)
         
         #last hidden state of the encoder is used as the initial hidden state of the decoder
-        hidden, cell = self.encoder(src)
+        hidden, cell = self.encoder(src,src_len)
         
         #first input to the decoder is the <sos> tokens
         input = trg[0,:]

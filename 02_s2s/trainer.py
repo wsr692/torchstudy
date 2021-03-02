@@ -13,6 +13,7 @@ class Seq2SeqTrain():
 		self.optimizer = optim.Adam(self.model.parameters())
 		self.criterion = nn.CrossEntropyLoss(ignore_index = hparams.TRG_PAD_IDX)
 		self.hparams=hparams
+		print(hparams)
 
 	def init_weights(self,m):
 		for name, param in m.named_parameters():
@@ -22,19 +23,17 @@ class Seq2SeqTrain():
 		return sum(p.numel() for p in self.model.parameters() if p.requires_grad)
 
 	def train(self,iterator):
-		
 		self.model.train()
 		
 		epoch_loss = 0
 		
 		for i, batch in enumerate(iterator):
 			
-			src = batch.src
+			src,src_len = batch.src
 			trg = batch.trg
 			
 			self.optimizer.zero_grad()
-			
-			output = self.model(src, trg)
+			output = self.model(src,src_len,trg)
 			
 			#trg = [trg len, batch size]
 			#output = [trg len, batch size, output dim]
@@ -69,10 +68,10 @@ class Seq2SeqTrain():
 		
 			for i, batch in enumerate(iterator):
 
-				src = batch.src
+				src,src_len = batch.src
 				trg = batch.trg
 
-				output = model(src, trg, 0) #turn off teacher forcing
+				output = model(src,src_len, trg, 0) #turn off teacher forcing
 
 				#trg = [trg len, batch size]
 				#output = [trg len, batch size, output dim]
@@ -109,7 +108,7 @@ class Seq2SeqTrain():
 			start_time = time.time()
 			
 			train_loss = self.train(train_iterator)
-			valid_loss = self.evaluate(valid_iterator)
+			valid_loss = self.evaluate(self.model,valid_iterator)
 			
 			end_time = time.time()
 			
