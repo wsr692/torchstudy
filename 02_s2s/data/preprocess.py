@@ -22,18 +22,20 @@ def tokenize_en(text):
 
 
 def create_dataset(device):
-	SRC = Field(tokenize = tokenize_fr, 
+	SRC = Field(tokenize = tokenize_en, 
 			init_token = '<sos>', 
 			eos_token = '<eos>', 
+			include_lengths = True,
 			lower = True)
 
-	TRG = Field(tokenize = tokenize_en, 
+	TRG = Field(tokenize = tokenize_fr, 
 			init_token = '<sos>', 
 			eos_token = '<eos>', 
+			#include_lengths = True,
 			lower = True)
 
 
-	train_data, valid_data, test_data = Multi30k.splits(exts = ('.fr', '.en'), 
+	train_data, valid_data, test_data = Multi30k.splits(exts = ('.en', '.fr'), 
 													fields = (SRC, TRG))
 	SRC.build_vocab(train_data, min_freq = 2)
 	TRG.build_vocab(train_data, min_freq = 2)
@@ -45,7 +47,12 @@ def create_dataset(device):
 	hparams.OUTPUT_DIM = len(TRG.vocab)
 	
 	train_iterator, valid_iterator, test_iterator = BucketIterator.splits(
-	(train_data, valid_data, test_data), batch_size = hparams.BATCH_SIZE, device = device)
+	(train_data, valid_data, test_data),
+	batch_size = hparams.BATCH_SIZE,
+	device = device,
+	sort_within_batch = True,
+	sort_key = lambda x : len(x.src)
+	)
 
 	return train_iterator,valid_iterator,test_iterator,hparams
 
